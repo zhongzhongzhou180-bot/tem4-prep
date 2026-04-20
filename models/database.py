@@ -146,7 +146,7 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅ 数据库初始化完成")
+    print("数据库初始化完成")
 
 
 def seed_knowledge_points():
@@ -158,7 +158,7 @@ def seed_knowledge_points():
     count = cursor.execute("SELECT COUNT(*) FROM knowledge_points").fetchone()[0]
     if count > 0:
         conn.close()
-        print("ℹ️ 知识点数据已存在，跳过")
+        print("知识点数据已存在，跳过")
         return
 
     # 词汇知识点（按TEM-4大纲分类）
@@ -200,7 +200,7 @@ def seed_knowledge_points():
 
     conn.commit()
     conn.close()
-    print(f"✅ 已插入 {len(all_points)} 个知识点")
+    print(f"已插入 {len(all_points)} 个知识点")
 
 
 def seed_questions():
@@ -211,7 +211,7 @@ def seed_questions():
     count = cursor.execute("SELECT COUNT(*) FROM questions").fetchone()[0]
     if count > 0:
         conn.close()
-        print("ℹ️ 题目数据已存在，跳过")
+        print("题目数据已存在，跳过")
         return
 
     # 获取知识点ID映射
@@ -620,7 +620,7 @@ def seed_questions():
 
     conn.commit()
     conn.close()
-    print(f"✅ 已插入 {len(questions)} 道题目")
+    print(f"已插入 {len(questions)} 道题目")
 
 
 if __name__ == '__main__':

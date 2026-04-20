@@ -353,9 +353,9 @@ init_app()
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("  🌳 TEM-4 自适应备考系统 启动中...")
+    print("  TEM-4 自适应备考系统 启动中...")
     print("=" * 50)
-    print("  ✅ 数据库初始化完成")
-    print("  🌿 访问 http://127.0.0.1:5000")
+    print("  数据库初始化完成")
+    print("  访问 http://127.0.0.1:5000")
     print("=" * 50)
     app.run(debug=True, host='0.0.0.0', port=5000)

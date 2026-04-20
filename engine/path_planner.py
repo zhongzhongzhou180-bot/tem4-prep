@@ -237,15 +237,39 @@ def get_weekly_plan(user_id):
                     'is_past': d < today,
                 })
             else:
-                plans.append({
-                    'date': d.isoformat(),
-                    'weekday': ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][d.weekday()],
-                    'phase': None,
-                    'tasks': [],
-                    'actual': [],
-                    'is_today': d == today,
-                    'is_past': d < today,
-                })
+                # 如果是今天，生成新计划
+                if d == today:
+                    daily_plan = generate_daily_plan(user_id, d.isoformat())
+                    if daily_plan:
+                        plans.append({
+                            'date': d.isoformat(),
+                            'weekday': ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][d.weekday()],
+                            'phase': daily_plan['phase'],
+                            'tasks': daily_plan['tasks'],
+                            'actual': [],
+                            'is_today': True,
+                            'is_past': False,
+                        })
+                    else:
+                        plans.append({
+                            'date': d.isoformat(),
+                            'weekday': ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][d.weekday()],
+                            'phase': None,
+                            'tasks': [],
+                            'actual': [],
+                            'is_today': True,
+                            'is_past': False,
+                        })
+                else:
+                    plans.append({
+                        'date': d.isoformat(),
+                        'weekday': ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][d.weekday()],
+                        'phase': None,
+                        'tasks': [],
+                        'actual': [],
+                        'is_today': d == today,
+                        'is_past': d < today,
+                    })
 
         return plans
     finally:
