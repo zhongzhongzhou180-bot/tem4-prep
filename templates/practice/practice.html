@@ -120,8 +120,10 @@ function selectOption(btn, selectedAnswer) {
     if (answered) return;
     answered = true;
 
+    // 提取选项的字母部分（如 "A. had she" -> "A"）
+    const selectedOptionLetter = selectedAnswer.split('.')[0].trim();
     const question = questionsData[currentIndex];
-    const isCorrect = selectedAnswer === question.correct_answer;
+    const isCorrect = selectedOptionLetter === question.correct_answer;
 
     if (isCorrect) {
         btn.classList.add('correct');
@@ -131,7 +133,7 @@ function selectOption(btn, selectedAnswer) {
         btn.classList.add('wrong');
         // 高亮正确答案
         document.querySelectorAll('.ac-option').forEach(opt => {
-            if (opt.textContent.trim().startsWith(question.correct_answer)) {
+            if (opt.textContent.trim().startsWith(question.correct_answer + '.')) {
                 opt.classList.add('correct');
             }
         });
@@ -155,7 +157,7 @@ function selectOption(btn, selectedAnswer) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             question_id: question.id,
-            user_answer: selectedAnswer,
+            user_answer: selectedOptionLetter,
             is_correct: isCorrect,
             time_spent: 0
         })
@@ -193,7 +195,7 @@ function nextQuestion() {
     const optionsContainer = document.getElementById('options-container');
     const options = typeof question.options === 'string' ? JSON.parse(question.options) : question.options;
     optionsContainer.innerHTML = options.map(opt =>
-        `<button class="ac-option" onclick="selectOption(this, '${opt[0]}')">${opt}</button>`
+        `<button class="ac-option" onclick="selectOption(this, '${opt}')">${opt}</button>`
     ).join('');
 
     // 隐藏解析和下一题按钮
