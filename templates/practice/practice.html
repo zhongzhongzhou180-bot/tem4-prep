@@ -191,6 +191,9 @@ function nextQuestion() {
     document.querySelector('#question-container .ac-badge-blue').textContent = question.kp_name;
     document.getElementById('question-text').textContent = question.content;
 
+    // 更新解析
+    document.getElementById('explanation-text').textContent = question.explanation;
+
     // 更新选项
     const optionsContainer = document.getElementById('options-container');
     const options = typeof question.options === 'string' ? JSON.parse(question.options) : question.options;
