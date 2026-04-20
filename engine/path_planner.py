@@ -194,6 +194,18 @@ def build_category_task(user_id, category, minutes, mastery, phase_config):
             'priority': 0,  # 最高优先级
         })
 
+    # 确保至少有一个任务
+    if not tasks:
+        # 对于新用户或没有任务的情况，添加基础学习任务
+        tasks.append({
+            'type': 'new',
+            'category': category,
+            'category_name': '词汇基础学习' if category == 'vocabulary' else '语法基础学习',
+            'count': min(10, int(minutes * items_per_minute)),
+            'estimated_minutes': min(5, minutes),
+            'priority': 2,
+        })
+
     return tasks
 
 
