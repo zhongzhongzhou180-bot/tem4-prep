@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}仪表盘 - TEM-4 备考岛{% endblock %}
+
+{% block content %}
+<div class="animate-fadeIn">
+    <!-- 欢迎横幅 -->
+    <div class="ac-card p-6 mb-6" style="background: linear-gradient(135deg, #E8F5E9, #FFF8E1); border-color: #AED581;">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold" style="color: #5D4037;">
+                    🌿 你好，{{ current_user.username }}！
+                </h1>
+                <p class="mt-1" style="color: #8D6E63;">
+                    当前阶段：<span class="font-semibold" style="color: {{ phase_config.color }};">{{ phase_config.name }}</span>
+                    · {{ phase_config.description }}
+                </p>
+            </div>
+            <div class="text-center">
+                <div class="text-4xl font-bold" style="color: #7CB342;">{{ days_left }}</div>
+                <div class="text-sm" style="color: #8D6E63;">天距考试</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="ac-card ac-stat">
+            <div class="ac-stat-value">{{ stats.total_questions }}</div>
+            <div class="ac-stat-label">总答题数</div>
+        </div>
+        <div class="ac-card ac-stat">
+            <div class="ac-stat-value" style="color: #FFB74D;">{{ "%.0f"|format(stats.accuracy * 100) }}%</div>
+            <div class="ac-stat-label">总正确率</div>
+        </div>
+        <div class="ac-card ac-stat">
+            <div class="ac-stat-value" style="color: #80CBC4;">{{ stats.study_days }}</div>
+            <div class="ac-stat-label">学习天数</div>
+        </div>
+        <div class="ac-card ac-stat">
+            <div class="ac-stat-value" style="color: #EF9A9A;">{{ profile.streak_days or 0 }}</div>
+            <div class="ac-stat-label">连续打卡</div>
+        </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <!-- 能力雷达图 -->
+        <div class="ac-card p-6">
+            <h2 class="text-lg font-bold mb-4" style="color: #5D4037;">📊 能力雷达</h2>
+            <div style="max-width: 300px; margin: 0 auto;">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 近7天趋势 -->
+        <div class="ac-card p-6">
+            <h2 class="text-lg font-bold mb-4" style="color: #5D4037;">📈 近7天学习趋势</h2>
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <!-- 今日计划 -->
+        <div class="ac-card p-6">
+            <h2 class="text-lg font-bold mb-4" style="color: #5D4037;">📋 今日学习计划</h2>
+            {% if today_plan and today_plan.tasks %}
+                {% for task in today_plan.tasks %}
+                <div class="flex items-center justify-between p-3 mb-2 rounded-xl" style="background: #F1F8E9;">
+                    <div>
+                        <span class="font-medium">{{ task.category_name }}</span>
+                        <span class="ac-badge ac-badge-{{ 'green' if task.type == 'review' else 'orange' }} ml-2">
+                            {{ '复习' if task.type == 'review' else '新学' if task.type == 'new' else '专项' }}
+                        </span>
+                    </div>
+                    <div class="text-sm" style="color: #8D6E63;">
+                        {{ task.count }}题 · ~{{ task.estimated_minutes }}分钟
+                    </div>
+                </div>
+                {% endfor %}
+                <a href="{{ url_for('practice', category='vocabulary') }}" class="ac-btn w-full text-center mt-4 block">
+                    🚀 开始今日学习
+                </a>
+            {% else %}
+                <p style="color: #8D6E63;">暂无计划，请先完成水平诊断</p>
+                <a href="{{ url_for('assessment') }}" class="ac-btn w-full text-center mt-4 block">
+                    🎯 去诊断
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- 薄弱点分析 -->
+        <div class="ac-card p-6">
+            <h2 class="text-lg font-bold mb-4" style="color: #5D4037;">🔍 薄弱点 TOP 5</h2>
+            {% if weak_points %}
+                {% for wp in weak_points %}
+                <div class="flex items-center justify-between p-3 mb-2 rounded-xl" style="background: #FFF3E0;">
+                    <div>
+                        <span class="font-medium">{{ wp.name }}</span>
+                        <span class="ac-badge ac-badge-orange ml-2">{{ wp.category }}</span>
+                    </div>
+                    <div class="text-sm font-semibold" style="color: #E65100;">
+                        {{ "%.0f"|format(wp.mastery_level * 100) }}%
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #8D6E63;">暂无数据，开始学习后即可查看薄弱点</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 里程碑 -->
+    <div class="ac-card p-6 mb-6">
+        <h2 class="text-lg font-bold mb-4" style="color: #5D4037;">🏁 学习里程碑</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for ms in milestones %}
+            <div class="p-4 rounded-xl text-center {% if ms.status == 'completed' %}bg-green-50{% elif ms.status == 'current' %}bg-yellow-50{% else %}bg-gray-50{% endif %}">
+                {% if ms.status == 'completed' %}
+                    <div class="text-2xl mb-1">✅</div>
+                {% elif ms.status == 'current' %}
+                    <div class="text-2xl mb-1 animate-bounce">🔥</div>
+                {% else %}
+                    <div class="text-2xl mb-1">🔒</div>
+                {% endif %}
+                <div class="text-sm font-medium" style="color: #5D4037;">{{ ms.name }}</div>
+                {% if ms.status == 'upcoming' and ms.get('progress') %}
+                    <div class="ac-progress mt-2">
+                        <div class="ac-progress-bar" style="width: {{ ms.progress }}%;"></div>
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 预估分数 -->
+    <div class="ac-card p-6 text-center" style="background: linear-gradient(135deg, #FFF8E1, #FFECB3); border-color: #FFD54F;">
+        <p class="text-sm mb-2" style="color: #8D6E63;">根据当前水平预估</p>
+        <div class="text-5xl font-bold" style="color: #FF8F00;">{{ profile.estimated_score or 0 }}</div>
+        <p class="text-sm mt-2" style="color: #8D6E63;">/ 100 分 · 目标 {{ current_user.target_score }} 分</p>
+        {% if profile.estimated_score and profile.estimated_score >= current_user.target_score %}
+            <p class="mt-2 font-semibold" style="color: #7CB342;">🎉 已达到目标分数！继续保持！</p>
+        {% elif profile.estimated_score %}
+            <p class="mt-2" style="color: #8D6E63;">
+                距目标还差 {{ current_user.target_score - (profile.estimated_score | int) }} 分，加油！💪
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 能力雷达图
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+        labels: ['词汇', '语法', '听力', '阅读', '写作'],
+        datasets: [{
+            label: '掌握度',
+            data: [
+                {{ mastery.vocabulary * 100 }},
+                {{ mastery.grammar * 100 }},
+                {{ mastery.listening * 100 }},
+                {{ mastery.reading * 100 }},
+                {{ mastery.writing * 100 }}
+            ],
+            backgroundColor: 'rgba(124, 179, 66, 0.2)',
+            borderColor: '#7CB342',
+            borderWidth: 2,
+            pointBackgroundColor: '#7CB342',
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            r: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { stepSize: 20, color: '#8D6E63' },
+                grid: { color: '#E8F5E9' },
+                pointLabels: { color: '#5D4037', font: { size: 13 } }
+            }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+// 趋势图
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for t in trend %}'{{ t.weekday }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [
+            {
+                label: '答题数',
+                data: [{% for t in trend %}{{ t.total }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: 'rgba(124, 179, 66, 0.5)',
+                borderRadius: 8,
+                yAxisID: 'y',
+            },
+            {
+                label: '正确率%',
+                data: [{% for t in trend %}{{ t.accuracy * 100 }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                type: 'line',
+                borderColor: '#FFB74D',
+                backgroundColor: 'rgba(255, 183, 77, 0.2)',
+                tension: 0.3,
+                yAxisID: 'y1',
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, title: { display: true, text: '答题数', color: '#8D6E63' } },
+            y1: { beginAtZero: true, max: 100, position: 'right', title: { display: true, text: '正确率%', color: '#8D6E63' }, grid: { drawOnChartArea: false } },
+            x: { grid: { display: false } }
+        },
+        plugins: { legend: { labels: { color: '#5D4037' } } }
+    }
+});
+</script>
+{% endblock %}

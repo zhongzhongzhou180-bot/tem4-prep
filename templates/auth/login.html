@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - TEM-4 备考岛{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="ac-card p-8 w-full max-w-md animate-fadeIn">
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">🌳</div>
+            <h1 class="text-2xl font-bold" style="color: #5D4037;">欢迎来到备考岛</h1>
+            <p class="mt-2" style="color: #8D6E63;">登录后开始你的 TEM-4 备考之旅</p>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 p-3 rounded-2xl text-center text-sm" style="background: #FFF3E0; color: #E65100;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2" style="color: #5D4037;">用户名</label>
+                <input type="text" name="username" required
+                       class="ac-input" placeholder="请输入用户名">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" style="color: #5D4037;">密码</label>
+                <input type="password" name="password" required
+                       class="ac-input" placeholder="请输入密码">
+            </div>
+            <button type="submit" class="ac-btn w-full text-lg py-3">🌿 登录</button>
+        </form>
+
+        <div class="text-center mt-6">
+            <p style="color: #8D6E63;">
+                还没有账号？
+                <a href="{{ url_for('register') }}" class="font-semibold" style="color: #7CB342;">去注册</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

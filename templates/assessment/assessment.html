@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}水平诊断 - TEM-4 备考岛{% endblock %}
+
+{% block content %}
+<div class="animate-fadeIn max-w-3xl mx-auto">
+    <!-- 诊断介绍 -->
+    <div class="ac-card p-6 mb-6 text-center" style="background: linear-gradient(135deg, #E8F5E9, #E0F7FA); border-color: #80CBC4;">
+        <div class="text-5xl mb-4">🎯</div>
+        <h1 class="text-2xl font-bold mb-2" style="color: #5D4037;">水平诊断测试</h1>
+        <p style="color: #8D6E63;">通过快速测试了解你的英语水平，系统将为你生成个性化学习计划</p>
+    </div>
+
+    {% if not started %}
+    <!-- 开始诊断 -->
+    <div class="ac-card p-6">
+        <h2 class="text-lg font-bold mb-4" style="color: #5D4037;">📋 测试说明</h2>
+        <ul class="space-y-2 mb-6" style="color: #5D4037;">
+            <li>📝 词汇测试：10道题，测试你的词汇掌握程度</li>
+            <li>📐 语法测试：10道题，测试你的语法运用能力</li>
+            <li>⏱️ 预计用时：约15-20分钟</li>
+            <li>💡 请认真作答，结果将影响你的个性化学习计划</li>
+        </ul>
+        <form method="POST" action="{{ url_for('start_assessment') }}">
+            <button type="submit" class="ac-btn w-full text-lg py-3">🌿 开始诊断</button>
+        </form>
+    </div>
+    {% elif not finished %}
+    <!-- 答题中 -->
+    <div class="ac-card p-6 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <span class="ac-badge ac-badge-blue">{{ current_category_name }}</span>
+            <span class="text-sm" style="color: #8D6E63;">
+                第 {{ current_index + 1 }} / {{ total_questions }} 题
+            </span>
+        </div>
+        <div class="ac-progress mb-6">
+            <div class="ac-progress-bar" style="width: {{ ((current_index + 1) / total_questions * 100) | round }}%;"></div>
+        </div>
+
+        <div class="mb-2">
+            <span class="ac-badge ac-badge-green">{{ current_question.kp_name }}</span>
+        </div>
+        <h3 class="text-lg font-semibold mb-6" style="color: #5D4037;">
+            {{ current_question.content }}
+        </h3>
+
+        <form method="POST" action="{{ url_for('answer_assessment') }}">
+            <input type="hidden" name="question_id" value="{{ current_question.id }}">
+            <input type="hidden" name="current_index" value="{{ current_index }}">
+            <div class="space-y-3">
+                {% set opts = current_question.options | from_json %}
+                {% for opt in opts %}
+                <label class="ac-option block cursor-pointer">
+                    <input type="radio" name="answer" value="{{ opt[0] }}" class="hidden">
+                    <span>{{ opt }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            <button type="submit" class="ac-btn w-full text-lg py-3 mt-6">
+                {% if current_index + 1 < total_questions %}下一题 ➡️{% else %}提交诊断 ✅{% endif %}
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <!-- 诊断结果 -->
+    <div class="ac-card p-6 mb-6 text-center" style="background: linear-gradient(135deg, #FFF8E1, #FFECB3); border-color: #FFD54F;">
+        <div class="text-5xl mb-4">🎊</div>
+        <h2 class="text-2xl font-bold mb-2" style="color: #5D4037;">诊断完成！</h2>
+        <p style="color: #8D6E63;">你的个性化学习计划已生成</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div class="ac-card p-6">
+            <h3 class="text-lg font-bold mb-4" style="color: #5D4037;">📊 能力评估</h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span style="color: #5D4037;">📝 词汇</span>
+                        <span class="font-semibold" style="color: #7CB342;">{{ "%.0f"|format(results.profile.vocabulary * 100) }}%</span>
+                    </div>
+                    <div class="ac-progress">
+                        <div class="ac-progress-bar" style="width: {{ results.profile.vocabulary * 100 }}%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span style="color: #5D4037;">📐 语法</span>
+                        <span class="font-semibold" style="color: #FFB74D;">{{ "%.0f"|format(results.profile.grammar * 100) }}%</span>
+                    </div>
+                    <div class="ac-progress">
+                        <div class="ac-progress-bar" style="width: {{ results.profile.grammar * 100 }}%; background: linear-gradient(90deg, #FFB74D, #FFD54F);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ac-card p-6 text-center">
+            <h3 class="text-lg font-bold mb-4" style="color: #5D4037;">🎯 预估分数</h3>
+            <div class="text-5xl font-bold" style="color: #FF8F00;">{{ results.estimated_score }}</div>
+            <p class="text-sm mt-2" style="color: #8D6E63;">/ 100 分</p>
+            {% if results.estimated_score >= 80 %}
+                <p class="mt-3 font-semibold" style="color: #7CB342;">🌟 基础很好，继续保持！</p>
+            {% elif results.estimated_score >= 60 %}
+                <p class="mt-3" style="color: #8D6E63;">💪 有一定基础，按计划学习即可通过</p>
+            {% else %}
+                <p class="mt-3" style="color: #8D6E63;">🌱 基础需要加强，别担心，系统会帮你规划</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="flex gap-4">
+        <a href="{{ url_for('dashboard') }}" class="ac-btn flex-1 text-center">🏠 查看仪表盘</a>
+        <a href="{{ url_for('practice', category='vocabulary') }}" class="ac-btn ac-btn-secondary flex-1 text-center">📝 开始练习</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .ac-option:has(input:checked) {
+        border-color: #7CB342;
+        background: #E8F5E9;
+    }
+</style>
+{% endblock %}

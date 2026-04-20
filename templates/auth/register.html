@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - TEM-4 备考岛{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="ac-card p-8 w-full max-w-md animate-fadeIn">
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">🌱</div>
+            <h1 class="text-2xl font-bold" style="color: #5D4037;">在备考岛安家</h1>
+            <p class="mt-2" style="color: #8D6E63;">创建账号，开启个性化备考之旅</p>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 p-3 rounded-2xl text-center text-sm" style="background: #FFF3E0; color: #E65100;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2" style="color: #5D4037;">用户名</label>
+                <input type="text" name="username" required
+                       class="ac-input" placeholder="给自己取个名字吧">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2" style="color: #5D4037;">密码</label>
+                <input type="password" name="password" required minlength="4"
+                       class="ac-input" placeholder="至少4位密码">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2" style="color: #5D4037;">考试日期</label>
+                <input type="date" name="exam_date" value="2026-06-14"
+                       class="ac-input">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2" style="color: #5D4037;">每日学习时间</label>
+                <select name="daily_minutes" class="ac-input">
+                    <option value="15">15 分钟</option>
+                    <option value="30" selected>30 分钟</option>
+                    <option value="45">45 分钟</option>
+                    <option value="60">60 分钟</option>
+                    <option value="90">90 分钟</option>
+                    <option value="120">120 分钟</option>
+                </select>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" style="color: #5D4037;">目标分数</label>
+                <select name="target_score" class="ac-input">
+                    <option value="60" selected>60 分（及格）</option>
+                    <option value="70">70 分（良好）</option>
+                    <option value="80">80 分（优秀）</option>
+                </select>
+            </div>
+            <button type="submit" class="ac-btn w-full text-lg py-3">🌿 开始备考之旅</button>
+        </form>
+
+        <div class="text-center mt-6">
+            <p style="color: #8D6E63;">
+                已有账号？
+                <a href="{{ url_for('login') }}" class="font-semibold" style="color: #7CB342;">去登录</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

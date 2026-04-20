@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}学习计划 - TEM-4 备考岛{% endblock %}
+
+{% block content %}
+<div class="animate-fadeIn">
+    <!-- 计划头部 -->
+    <div class="ac-card p-6 mb-6" style="background: linear-gradient(135deg, #E0F7FA, #E8F5E9); border-color: #80CBC4;">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold" style="color: #5D4037;">📅 学习计划</h1>
+                <p class="mt-1" style="color: #8D6E63;">
+                    系统根据你的水平和进度自动生成并持续调整
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <span class="ac-badge ac-badge-green text-sm">词汇 {{ "%.0f"|format(vocab_mastery * 100) }}%</span>
+                <span class="ac-badge ac-badge-orange text-sm">语法 {{ "%.0f"|format(grammar_mastery * 100) }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 本周计划 -->
+    <div class="ac-card p-6 mb-6">
+        <h2 class="text-lg font-bold mb-4" style="color: #5D4037;">📆 本周学习计划</h2>
+        <div class="grid grid-cols-7 gap-2">
+            {% for day in weekly_plan %}
+            <div class="text-center p-3 rounded-xl {% if day.is_today %}ring-2 ring-green-400{% elif day.is_past %}opacity-60{% endif %}"
+                 style="background: {% if day.is_today %}#E8F5E9{% else %}#FAFAFA{% endif %};">
+                <div class="text-xs font-medium mb-1" style="color: #8D6E63;">{{ day.weekday }}</div>
+                <div class="text-xs mb-2" style="color: #BCAAA4;">{{ day.date[5:] }}</div>
+                {% if day.tasks %}
+                    {% for task in day.tasks %}
+                    <div class="text-xs mb-1" title="{{ task.category_name }}">
+                        {% if task.type == 'review' %}📖{% elif task.type == 'new' %}🆕{% else %}💪{% endif %}
+                        {{ task.count }}
+                    </div>
+                    {% endfor %}
+                {% elif day.is_past %}
+                    <div class="text-xs" style="color: #BCAAA4;">—</div>
+                {% else %}
+                    <div class="text-xs" style="color: #BCAAA4;">待定</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 阶段信息 -->
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+        {% for phase_key, phase_info in phases.items() %}
+        <div class="ac-card p-5 {% if phase_key == current_phase %}ring-2{% else %}opacity-70{% endif %}"
+             style="border-color: {{ phase_info.color }}; {% if phase_key == current_phase %}background: linear-gradient(135deg, #FFFFFF, #F1F8E9);{% endif %}">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">
+                    {% if phase_key == 'foundation' %}🌱{% elif phase_key == 'reinforcement' %}💪{% else %}🏃{% endif %}
+                </span>
+                <h3 class="font-bold" style="color: #5D4037;">{{ phase_info.name }}</h3>
+                {% if phase_key == current_phase %}
+                    <span class="ac-badge ac-badge-green text-xs">当前</span>
+                {% endif %}
+            </div>
+            <p class="text-sm" style="color: #8D6E63;">{{ phase_info.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 今日详细计划 -->
+    {% if today_plan and today_plan.tasks %}
+    <div class="ac-card p-6 mb-6">
+        <h2 class="text-lg font-bold mb-4" style="color: #5D4037;">📋 今日详细计划</h2>
+        <div class="space-y-3">
+            {% for task in today_plan.tasks %}
+            <div class="flex items-center justify-between p-4 rounded-xl" style="background: #F1F8E9;">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">
+                        {% if task.type == 'review' %}📖{% elif task.type == 'new' %}🆕{% else %}💪{% endif %}
+                    </span>
+                    <div>
+                        <div class="font-medium" style="color: #5D4037;">{{ task.category_name }}</div>
+                        <div class="text-xs" style="color: #8D6E63;">
+                            {{ task.count }}题 · 约{{ task.estimated_minutes }}分钟
+                        </div>
+                    </div>
+                </div>
+                {% if task.category == 'vocabulary' %}
+                <a href="{{ url_for('practice', category='vocabulary', mode=task.type) }}" class="ac-btn text-sm">
+                    开始
+                </a>
+                {% elif task.category == 'grammar' %}
+                <a href="{{ url_for('practice', category='grammar', mode=task.type) }}" class="ac-btn text-sm">
+                    开始
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 快速操作 -->
+    <div class="grid grid-cols-2 gap-4">
+        <a href="{{ url_for('practice', category='vocabulary') }}" class="ac-card p-4 text-center block hover:shadow-lg transition-shadow">
+            <div class="text-3xl mb-2">📝</div>
+            <div class="font-semibold" style="color: #5D4037;">词汇练习</div>
+        </a>
+        <a href="{{ url_for('practice', category='grammar') }}" class="ac-card p-4 text-center block hover:shadow-lg transition-shadow">
+            <div class="text-3xl mb-2">📐</div>
+            <div class="font-semibold" style="color: #5D4037;">语法练习</div>
+        </a>
+    </div>
+</div>
+{% endblock %}

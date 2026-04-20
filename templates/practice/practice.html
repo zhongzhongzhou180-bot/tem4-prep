@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}练习 - TEM-4 备考岛{% endblock %}
+
+{% block content %}
+<div class="animate-fadeIn">
+    <!-- 练习头部 -->
+    <div class="ac-card p-6 mb-6" style="background: linear-gradient(135deg, #E8F5E9, #E0F2F1); border-color: #AED581;">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold" style="color: #5D4037;">
+                    {% if category == 'vocabulary' %}📝 词汇练习{% else %}📐 语法练习{% endif %}
+                </h1>
+                <p class="mt-1" style="color: #8D6E63;">
+                    当前掌握度：<span class="font-semibold" style="color: #7CB342;">{{ "%.0f"|format(mastery * 100) }}%</span>
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ url_for('practice', category=category, mode='mixed') }}"
+                   class="ac-btn {% if mode == 'mixed' %}opacity-100{% else %}opacity-60{% endif %} text-sm">
+                    🔄 综合
+                </a>
+                <a href="{{ url_for('practice', category=category, mode='review') }}"
+                   class="ac-btn {% if mode == 'review' %}opacity-100{% else %}opacity-60{% endif %} text-sm">
+                    📖 复习
+                </a>
+                <a href="{{ url_for('practice', category=category, mode='weak') }}"
+                   class="ac-btn ac-btn-secondary {% if mode == 'weak' %}opacity-100{% else %}opacity-60{% endif %} text-sm">
+                    🔍 薄弱
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 答题区域 -->
+    <div id="practice-area">
+        {% if questions %}
+        <div class="ac-card p-6 mb-4">
+            <!-- 进度条 -->
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium" style="color: #8D6E63;">
+                    第 <span id="current-num">1</span> / {{ questions|length }} 题
+                </span>
+                <span class="ac-badge ac-badge-green" id="score-badge">
+                    ✅ {{ correct_count }} / {{ questions|length }}
+                </span>
+            </div>
+            <div class="ac-progress mb-6">
+                <div class="ac-progress-bar" id="progress-bar" style="width: {{ (1 / questions|length * 100)|round }}%;"></div>
+            </div>
+
+            <!-- 题目 -->
+            <div id="question-container">
+                <div class="mb-2">
+                    <span class="ac-badge ac-badge-blue">{{ questions[0].kp_name }}</span>
+                </div>
+                <h3 class="text-lg font-semibold mb-6" style="color: #5D4037;" id="question-text">
+                    {{ questions[0].content }}
+                </h3>
+
+                <!-- 选项 -->
+                <div class="space-y-3" id="options-container">
+                    {% set opts = questions[0].options | from_json %}
+                    {% for opt in opts %}
+                    <button class="ac-option" onclick="selectOption(this, '{{ opt[0] }}')">
+                        {{ opt }}
+                    </button>
+                    {% endfor %}
+                </div>
+
+                <!-- 解析（隐藏） -->
+                <div id="explanation" class="hidden mt-4 p-4 rounded-xl" style="background: #F1F8E9;">
+                    <p class="font-semibold mb-1" style="color: #7CB342;">💡 解析</p>
+                    <p style="color: #5D4037;" id="explanation-text">{{ questions[0].explanation }}</p>
+                </div>
+
+                <!-- 下一题按钮 -->
+                <div class="mt-6 text-center hidden" id="next-btn-container">
+                    <button class="ac-btn" onclick="nextQuestion()">下一题 ➡️</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 完成面板（隐藏） -->
+        <div id="complete-panel" class="hidden ac-card p-8 text-center">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-2xl font-bold mb-2" style="color: #5D4037;">练习完成！</h2>
+            <p class="text-lg mb-4" style="color: #8D6E63;">
+                正确率：<span class="font-bold" style="color: #7CB342;" id="final-accuracy">0%</span>
+            </p>
+            <div class="flex justify-center gap-4">
+                <a href="{{ url_for('practice', category=category, mode=mode) }}" class="ac-btn">🔄 再来一轮</a>
+                <a href="{{ url_for('dashboard') }}" class="ac-btn ac-btn-outline">🏠 返回仪表盘</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="ac-card p-8 text-center">
+            <div class="text-4xl mb-4">📭</div>
+            <p style="color: #8D6E63;">暂无题目，请先完成水平诊断以生成练习内容</p>
+            <a href="{{ url_for('assessment') }}" class="ac-btn inline-block mt-4">🎯 去诊断</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 隐藏数据 -->
+<div id="questions-data" class="hidden" data-questions='{{ questions | tojson }}'></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Jinja2 from_json filter replacement - data is already parsed via tojson
+const questionsData = JSON.parse(document.getElementById('questions-data').dataset.questions);
+let currentIndex = 0;
+let correctCount = 0;
+let answered = false;
+
+function selectOption(btn, selectedAnswer) {
+    if (answered) return;
+    answered = true;
+
+    const question = questionsData[currentIndex];
+    const isCorrect = selectedAnswer === question.correct_answer;
+
+    if (isCorrect) {
+        btn.classList.add('correct');
+        correctCount++;
+        showToast('✅ 回答正确！', 'success');
+    } else {
+        btn.classList.add('wrong');
+        // 高亮正确答案
+        document.querySelectorAll('.ac-option').forEach(opt => {
+            if (opt.textContent.trim().startsWith(question.correct_answer)) {
+                opt.classList.add('correct');
+            }
+        });
+        showToast('❌ 回答错误，看看解析吧', 'error');
+    }
+
+    // 禁用所有选项
+    document.querySelectorAll('.ac-option').forEach(opt => {
+        opt.style.pointerEvents = 'none';
+    });
+
+    // 显示解析
+    document.getElementById('explanation').classList.remove('hidden');
+
+    // 更新分数
+    document.getElementById('score-badge').textContent = `✅ ${correctCount} / ${questionsData.length}`;
+
+    // 发送答案到后端
+    fetch('{{ url_for("submit_answer") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            question_id: question.id,
+            user_answer: selectedAnswer,
+            is_correct: isCorrect,
+            time_spent: 0
+        })
+    });
+
+    // 显示下一题按钮
+    document.getElementById('next-btn-container').classList.remove('hidden');
+}
+
+function nextQuestion() {
+    currentIndex++;
+
+    if (currentIndex >= questionsData.length) {
+        // 显示完成面板
+        document.getElementById('practice-area').querySelector('.ac-card').classList.add('hidden');
+        document.getElementById('complete-panel').classList.remove('hidden');
+        document.getElementById('final-accuracy').textContent =
+            Math.round(correctCount / questionsData.length * 100) + '%';
+        return;
+    }
+
+    answered = false;
+    const question = questionsData[currentIndex];
+
+    // 更新进度
+    document.getElementById('current-num').textContent = currentIndex + 1;
+    document.getElementById('progress-bar').style.width =
+        ((currentIndex + 1) / questionsData.length * 100) + '%';
+
+    // 更新题目
+    document.querySelector('#question-container .ac-badge-blue').textContent = question.kp_name;
+    document.getElementById('question-text').textContent = question.content;
+
+    // 更新选项
+    const optionsContainer = document.getElementById('options-container');
+    const options = typeof question.options === 'string' ? JSON.parse(question.options) : question.options;
+    optionsContainer.innerHTML = options.map(opt =>
+        `<button class="ac-option" onclick="selectOption(this, '${opt[0]}')">${opt}</button>`
+    ).join('');
+
+    // 隐藏解析和下一题按钮
+    document.getElementById('explanation').classList.add('hidden');
+    document.getElementById('next-btn-container').classList.add('hidden');
+}
+</script>
+
+{# Jinja2 template filter for from_json #}
+{% endblock %}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TEM-4 自适应备考{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="ac-nav sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2 text-xl font-bold" style="color: #7CB342;">
+                <span class="text-2xl">🌳</span>
+                <span>TEM-4 备考岛</span>
+            </a>
+            {% if current_user %}
+            <div class="hidden md:flex items-center gap-1">
+                <a href="{{ url_for('dashboard') }}" class="ac-nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    🏠 仪表盘
+                </a>
+                <a href="{{ url_for('practice', category='vocabulary') }}" class="ac-nav-link">
+                    📝 词汇练习
+                </a>
+                <a href="{{ url_for('practice', category='grammar') }}" class="ac-nav-link">
+                    📐 语法练习
+                </a>
+                <a href="{{ url_for('plan') }}" class="ac-nav-link {% if request.endpoint == 'plan' %}active{% endif %}">
+                    📅 学习计划
+                </a>
+                <a href="{{ url_for('assessment') }}" class="ac-nav-link">
+                    🎯 水平诊断
+                </a>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm" style="color: #8D6E63;">👋 {{ current_user.username }}</span>
+                <a href="{{ url_for('logout') }}" class="ac-nav-link text-sm">退出</a>
+            </div>
+            {% endif %}
+        </div>
+        <!-- 移动端导航 -->
+        {% if current_user %}
+        <div class="md:hidden flex justify-around py-2 border-t" style="border-color: #E8F5E9;">
+            <a href="{{ url_for('dashboard') }}" class="text-center text-xs" style="color: #5D4037;">
+                <div class="text-lg">🏠</div>仪表盘
+            </a>
+            <a href="{{ url_for('practice', category='vocabulary') }}" class="text-center text-xs" style="color: #5D4037;">
+                <div class="text-lg">📝</div>词汇
+            </a>
+            <a href="{{ url_for('practice', category='grammar') }}" class="text-center text-xs" style="color: #5D4037;">
+                <div class="text-lg">📐</div>语法
+            </a>
+            <a href="{{ url_for('plan') }}" class="text-center text-xs" style="color: #5D4037;">
+                <div class="text-lg">📅</div>计划
+            </a>
+        </div>
+        {% endif %}
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="text-center py-6 text-sm" style="color: #BCAAA4;">
+        🌿 TEM-4 自适应备考系统 · 让学习像在岛上散步一样轻松 🌿
+    </footer>
+
+    <!-- Toast 容器 -->
+    <div id="toast-container"></div>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `ac-toast ac-toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
