@@ -348,11 +348,13 @@ def internal_error(e):
 
 
 # ===== 启动 =====
+# 应用启动时初始化数据库
+init_app()
+
 if __name__ == '__main__':
     print("=" * 50)
     print("  🌳 TEM-4 自适应备考系统 启动中...")
     print("=" * 50)
-    init_app()
     print("  ✅ 数据库初始化完成")
     print("  🌿 访问 http://127.0.0.1:5000")
     print("=" * 50)
